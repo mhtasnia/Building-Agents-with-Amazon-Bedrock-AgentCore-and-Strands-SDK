@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+.bedrock_agentcore/
+.aws/
+.env
