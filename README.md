@@ -13,7 +13,7 @@ Each lesson lives in its own directory with its own README, source, and `require
 │   ├── README.md
 │   ├── demo.py
 │   └── requirements.txt
-├── 03-extending-agents-with-tools/
+├── 03-strands-agentcore-function-calling/
 ├── ...
 ├── 22-project-ai-support-agent/
 └── README.md
