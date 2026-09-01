@@ -184,34 +184,4 @@ Recent versions of the starter toolkit print a recommendation on every invoke sa
 
 `agentcore deploy` was not usable in the environment this lab was run in. On an AWS Academy Learner Lab account, where the caller identity is an assumed `voclabs` role, CodeBuild stops the build during the PROVISIONING phase. The build reports status `STOPPED` rather than `FAILED`, with no error message and no log stream to read. Starting a build directly through boto3, with the toolkit out of the picture, reproduces the same stop, which rules the CLI out as the cause. Everything the exercise teaches is observable through `agentcore dev`, since a local run still calls Bedrock over the network and the validation happens in the tool either way.
 
-## Troubleshooting
 
-### ExpiredToken from any boto3 call
-
-Learner Lab credentials are temporary. The access key begins with `ASIA` and there is an `aws_session_token` alongside it, and the set expires after a few hours. Replace all three lines in `~/.aws/credentials`, not just the key and secret. Do not edit that file in Notepad, which writes a byte order mark and produces `ConfigParseError` on the next read. Use an editor where you can confirm the encoding is UTF-8 without BOM.
-
-### agentcore is not recognised as a command
-
-Each lab folder has its own virtualenv, and the toolkit is installed per environment rather than globally. Run `python -m pip install -r requirements.txt` with the venv active, and add `bedrock-agentcore-starter-toolkit` and `uv` explicitly if the requirements file does not list them.
-
-### uv trampoline failed to canonicalize script path
-
-Every `.exe` in `.venv\Scripts\` fails at once rather than just one, which is the giveaway. The cause is a virtualenv copied or moved between folders. Windows venvs hardcode absolute paths into their launcher shims and cannot be relocated. Delete `.venv` and rebuild it in place. `python -m pip` bypasses the shim in the meantime.
-
-### ModuleNotFoundError: No module named 'uvicorn'
-
-The traceback comes through `multiprocessing.spawn` and the path in it points at a system Python rather than the one in `.venv`. The `--reload` flag runs the server in a subprocess that loses the interpreter. Drop `--reload`, or call the venv interpreter by absolute path. The ASGI application object is the module-level `app` in `starter.py`:
-
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn starter:app --host 0.0.0.0 --port 8080
-```
-
-`starter.py` also calls `app.run()` under `if __name__ == "__main__"`, so `python starter.py` serves the same thing.
-
-### Dependency install finishing without installing much
-
-On Python 3.14, parts of the stack have no prebuilt wheels and fall back to source builds that fail partway. The symptom is `python -m pip list` showing two or three packages after an install that appeared to complete. Rebuild the environment on 3.12:
-
-```powershell
-py -3.12 -m venv .venv
-```
