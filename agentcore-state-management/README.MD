@@ -4,9 +4,7 @@ An implementation of short-term memory management for an AI travel assistant (Wa
 
 This project demonstrates how context can persist across multi-turn user conversations through custom hook-based memory injection.
 
-## Architecture & Project Structure
-
-```text
+Architecture & Project Structure
 agentcore-state-management/
 ├── .bedrock_agentcore/
 ├── datasets/
@@ -21,28 +19,40 @@ agentcore-state-management/
 └── requirements.txt
 
 Execution Screenshots
-Session Execution — Step 1: Initial Setup & Turn 1
+Session 1 — Initial Setup & Turn 1
 
 The first session establishes the user's travel context and destination. WanderBot receives the request to plan a budget trip to Barcelona and stores the conversation context in AgentCore Memory.
 
-<p align="center"> <img src="screenshots/session_1.png" alt="Session 1 — Initial Setup & Turn 1" width="800"/> </p>
-Session Execution — Step 2: Multi-Turn Context Retention & Tool Invocation
+<p align="center"> <img src="screenshots/session_1.png" alt="Session 1 — Initial Setup & Turn 1" width="850"> </p>
+Session 2 — Multi-Turn Context Retention & Tool Invocation
 
 The second session demonstrates that WanderBot successfully retains the destination context from the previous turn and uses it without requiring the user to repeat the destination.
 
-<p align="center"> <img src="screenshots/session_2.png" alt="Session 2 — Multi-Turn Context Retention & Tool Invocation" width="800"/> </p>
-Implementation Checklist & Task Status
+<p align="center"> <img src="screenshots/session_2.png" alt="Session 2 — Multi-Turn Context Retention & Tool Invocation" width="850"> </p>
+Implementation Checklist
 
+All core requirements for short-term memory management have been completed:
+
+ Create a memory resource using agentcore memory create WanderBot and store the resource ID in MEMORY_ID.
+ Import HookProvider, HookRegistry, AgentInitializedEvent, and MessageAddedEvent from strands.hooks.
+ Configure memory_client, memory_id, and last_k_turns in the hook provider.
+ Register AgentInitializedEvent with on_agent_initialized.
+ Register MessageAddedEvent with on_message_added.
+ Build the Agent with ShortTermMemoryHookProvider.
+ Pass explicit session_id and actor_id through the agent state.
+ Run a continuous multi-turn conversation demonstrating context retention without re-prompting the user.
+How Short-Term Memory Works
+1. Client-Driven Session Continuity
 
 The client supplies a stable session_id and actor_id in the invocation payload. This allows user context to persist across page refreshes or device switches.
 
-Hook-Based Memory Injection
+2. Hook-Based Memory Injection
 
 AgentInitializedEvent queries the Bedrock AgentCore Memory data plane through MemoryClient to retrieve the last K conversational turns.
 
-The retrieved turns are formatted and appended directly to the agent's system_prompt dynamically during agent initialization.
+The retrieved turns are formatted and dynamically appended to the agent's system_prompt during initialization.
 
-Event Persistence
+3. Event Persistence
 
 MessageAddedEvent captures new messages as they occur and writes them asynchronously back to the memory store.
 
@@ -55,26 +65,37 @@ python -m uvicorn demo:app --port 8080 --reload
 
 2. Execute the Multi-Turn Conversation
 
-In a separate terminal window, define a persistent session variable and run the three-turn sequence to test memory retention:
+In a separate terminal, define a persistent session variable:
 
 $sessionId = "barcelona_trip"
 
-# Turn 1: Establish destination and intent
+Turn 1 — Establish Destination and Intent
 agentcore invoke --dev --session-id $sessionId '{"message": "I want to plan a trip to Barcelona on a budget", "actor_id": "alice"}'
 
-# Turn 2: Filter hotels by budget
-# Agent retains "Barcelona" from turn 1
+Turn 2 — Filter Hotels by Budget
+
+The agent retains Barcelona from the previous turn:
+
 agentcore invoke --dev --session-id $sessionId '{"message": "What hotels are available under $150 per night?", "actor_id": "alice"}'
 
-# Turn 3: Compare specific attributes like cancellation policies
+Turn 3 — Compare Cancellation Policies
+
+The user can continue the conversation without repeating the destination or hotel context:
+
 agentcore invoke --dev --session-id $sessionId '{"message": "Which one has the best cancellation policy?", "actor_id": "alice"}'
 
 Expected Behavior
 
 Across the three turns, WanderBot maintains the conversation context:
 
-The user establishes Barcelona as the destination and specifies a budget-oriented trip.
-The user asks for hotels under $150 per night without repeating the destination.
-The user asks about cancellation policies without specifying which destination or hotels they are referring to.
+Destination: The user establishes Barcelona as the destination and specifies a budget-oriented trip.
+Hotel Search: The user asks for hotels under $150 per night without repeating the destination.
+Follow-Up: The user asks about cancellation policies without explicitly specifying the destination or hotels again.
 
-The memory hooks allow WanderBot to understand these follow-up requests using the context stored from previous turns.
+The memory hooks allow WanderBot to understand these follow-up requests using context retrieved from previous turns.
+
+Key Takeaway
+
+This implementation demonstrates how Bedrock AgentCore Memory and Strands hooks can be combined to provide short-term conversational memory.
+
+Rather than requiring the client to resend the entire conversation history on every request, WanderBot uses a stable session and actor identity to retrieve relevant previous turns and inject them into the agent's context automatically.
