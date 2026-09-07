@@ -19,6 +19,18 @@ agentcore-state-management/
 ├── demo.py
 ├── memory_setup.py
 └── requirements.txt
+
+Execution Screenshots
+Session Execution — Step 1: Initial Setup & Turn 1
+
+The first session establishes the user's travel context and destination. WanderBot receives the request to plan a budget trip to Barcelona and stores the conversation context in AgentCore Memory.
+
+<p align="center"> <img src="screenshots/session_1.png" alt="Session 1 — Initial Setup & Turn 1" width="800"/> </p>
+Session Execution — Step 2: Multi-Turn Context Retention & Tool Invocation
+
+The second session demonstrates that WanderBot successfully retains the destination context from the previous turn and uses it without requiring the user to repeat the destination.
+
+<p align="center"> <img src="screenshots/session_2.png" alt="Session 2 — Multi-Turn Context Retention & Tool Invocation" width="800"/> </p>
 Implementation Checklist & Task StatusAll core requirements and exercises for short-term memory management have been successfully completed:[x] Create a memory resource using agentcore memory create WanderBot and store the resource ID into MEMORY_ID.[x] Import hook classes (HookProvider, HookRegistry, AgentInitializedEvent, MessageAddedEvent) from strands.hooks.[x] Configure hook class attributes in __init__ to retain memory_client, memory_id, and last_k_turns.[x] Bind events in register_hooks() mapping AgentInitializedEvent to on_agent_initialized and MessageAddedEvent to on_message_added.[x] Build the Agent in the entrypoint with hooks=[ShortTermMemoryHookProvider(memory_client, MEMORY_ID)] and pass explicit session/actor context via state={"session_id": session_id, "actor_id": actor_id}.[x] Run a continuous multi-turn conversation ensuring WanderBot seamlessly retains the destination context across turns without re-prompting the user.How Short-Term Memory WorksClient-Driven Session Continuity: The client supplies a stable session_id and actor_id in the invocation payload. This guarantees that user context persists across page refreshes or device switches.Hook-Based Injection:AgentInitializedEvent queries the Bedrock AgentCore Memory data plane via MemoryClient to retrieve the last $K$ conversational turns.Retrieved turns are formatted and appended directly to the agent's system_prompt dynamically upon initialization.Event Persistence: MessageAddedEvent captures new messages as they occur and writes them asynchronously back to the memory store.Execution ScreenshotsSession Execution Step 1 (Initial Setup & Turn 1)Session Execution Step 2 (Multi-turn Context Retention & Tool Invocation)Running the Agent Locally1. Start the Local Development ServerLaunch the application via the Bedrock AgentCore CLI runtime interface or direct ASGI server:PowerShellpython -m uvicorn demo:app --port 8080 --reload
 2. Execute the Multi-Turn ConversationIn a separate terminal window, define a persistent session variable and run the three-turn sequence to test memory retention:PowerShell$sessionId = "barcelona_trip"
 
