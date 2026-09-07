@@ -4,7 +4,9 @@ An implementation of short-term memory management for an AI travel assistant (Wa
 
 This project demonstrates how context can persist across multi-turn user conversations through custom hook-based memory injection.
 
-Architecture & Project Structure
+## Architecture & Project Structure
+
+```text
 agentcore-state-management/
 ├── .bedrock_agentcore/
 ├── datasets/
@@ -31,17 +33,6 @@ The second session demonstrates that WanderBot successfully retains the destinat
 <p align="center"> <img src="screenshots/session_2.png" alt="Session 2 — Multi-Turn Context Retention & Tool Invocation" width="800"/> </p>
 Implementation Checklist & Task Status
 
-All core requirements and exercises for short-term memory management have been successfully completed:
-
- Create a memory resource using agentcore memory create WanderBot and store the resource ID into MEMORY_ID.
- Import hook classes (HookProvider, HookRegistry, AgentInitializedEvent, MessageAddedEvent) from strands.hooks.
- Configure hook class attributes in __init__ to retain memory_client, memory_id, and last_k_turns.
- Bind events in register_hooks(), mapping AgentInitializedEvent to on_agent_initialized and MessageAddedEvent to on_message_added.
- Build the Agent in the entrypoint with hooks=[ShortTermMemoryHookProvider(memory_client, MEMORY_ID)].
- Pass explicit session and actor context via state={"session_id": session_id, "actor_id": actor_id}.
- Run a continuous multi-turn conversation demonstrating that WanderBot retains the destination context across turns without requiring the user to repeat it.
-How Short-Term Memory Works
-Client-Driven Session Continuity
 
 The client supplies a stable session_id and actor_id in the invocation payload. This allows user context to persist across page refreshes or device switches.
 
